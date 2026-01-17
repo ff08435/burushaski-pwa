@@ -7,13 +7,14 @@ import { useUser } from "../context/UserContext";
 import ProgressBar from "../Components/ProgressBar";
 
 export default function ModuleView() {
-  const { moduleId } = useParams();
+  const params = useParams();
+  const moduleId = params?.moduleId; // ✅ SAFE ACCESS
+
   const data = useSentences();
   const { user, loading } = useUser();
-
   const [completed, setCompleted] = useState([]);
 
-  // ⏳ WAIT for user hydration (CRITICAL FIX)
+  // ⏳ Wait for user hydration
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
@@ -22,21 +23,28 @@ export default function ModuleView() {
     );
   }
 
-  // 🔐 AUTH GUARD (only AFTER loading finishes)
+  // 🔐 Auth guard
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  useEffect(() => {
-    if (!user?.participantId) return;
+  // 🚨 Route guard (THIS FIXES BLANK SCREEN)
+  if (!moduleId) {
+    return (
+      <div className="p-6 text-white">
+        Invalid module URL
+      </div>
+    );
+  }
 
+  useEffect(() => {
     db.recordings
       .where({ participantId: user.participantId, moduleId })
       .toArray()
       .then((rows) =>
         setCompleted(rows.map((r) => r.sentenceId))
       );
-  }, [moduleId, user?.participantId]);
+  }, [moduleId, user.participantId]);
 
   if (!data) return null;
 
@@ -45,12 +53,12 @@ export default function ModuleView() {
   );
 
   if (!module) {
-    return <p className="p-4 text-white">Module not found</p>;
+    return (
+      <div className="p-6 text-white">
+        Module not found
+      </div>
+    );
   }
-
-  const allCompleted =
-    completed.length === module.sentences.length &&
-    module.sentences.length > 0;
 
   return (
     <div className="p-6 space-y-4">
@@ -62,12 +70,6 @@ export default function ModuleView() {
         completed={completed.length}
         total={module.sentences.length}
       />
-
-      {allCompleted && (
-        <p className="text-green-400 font-semibold">
-          Module complete 🎉
-        </p>
-      )}
 
       {module.sentences.map((sentence, index) => (
         <SentenceCard
