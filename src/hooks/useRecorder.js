@@ -1,11 +1,8 @@
+// src/hooks/useRecorder.js
 import { useState, useRef } from "react";
-import { db } from "../db/indexdb";
-import { useUser } from "../context/UserContext";
 
-export function useRecorder({ moduleId, sentenceId }) {
-  const { user } = useUser();
-
-  const [recording, setRecording] = useState(false);
+export function useRecorder() {
+  const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
 
@@ -21,27 +18,19 @@ export function useRecorder({ moduleId, sentenceId }) {
     };
 
     mediaRecorder.start();
-    setRecording(true);
+    setIsRecording(true);
   };
 
-  const stopRecording = async () => {
+  const stopRecording = () => {
     return new Promise((resolve) => {
       const mediaRecorder = mediaRecorderRef.current;
 
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-
-        await db.recordings.add({
-          participantId: user.participantId,
-          dialect: user.dialect,
-          moduleId,
-          sentenceId,
-          audioBlob: blob,
-          status: "pending",
-          createdAt: new Date(),
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, {
+          type: "audio/webm",
         });
 
-        setRecording(false);
+        setIsRecording(false);
         resolve(blob);
       };
 
@@ -49,9 +38,14 @@ export function useRecorder({ moduleId, sentenceId }) {
     });
   };
 
+  const resetRecording = () => {
+    chunksRef.current = [];
+  };
+
   return {
-    recording,
+    isRecording,
     startRecording,
     stopRecording,
+    resetRecording,
   };
 }

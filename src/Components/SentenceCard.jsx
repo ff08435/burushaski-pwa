@@ -12,33 +12,32 @@ export default function SentenceCard({
 }) {
   const { user } = useUser();
 
- const { recording, startRecording, stopRecording } = useRecorder({ 
-  moduleId: moduleId, 
-  sentenceId: sentence.sentenceId 
-});
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    resetRecording,
+  } = useRecorder();
 
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
 
   const isRecorded = isCompleted;
 
   const handleStart = async () => {
-    setIsRecording(true);
     await startRecording();
   };
 
   const handleStop = async () => {
     const blob = await stopRecording();
-    setIsRecording(false);
-
     if (blob) {
       setAudioBlob(blob);
       setAudioUrl(URL.createObjectURL(blob));
     }
   };
 
-  const resetRecording = () => {
+  const handleReset = () => {
+    resetRecording();
     setAudioBlob(null);
     setAudioUrl(null);
   };
@@ -48,11 +47,12 @@ export default function SentenceCard({
 
     await db.recordings.add({
       participantId: user.participantId,
+      dialect: user.dialect,
       moduleId,
       sentenceId: sentence.sentenceId,
-      audio: audioBlob,
+      audioBlob,
+      status: "pending", // 🔑 offline queue
       createdAt: new Date(),
-      synced: false, // 🔑 queued for later upload
     });
 
     onSubmitted(sentence.sentenceId);
@@ -102,7 +102,7 @@ export default function SentenceCard({
 
           <div className="space-x-2">
             <button
-              onClick={resetRecording}
+              onClick={handleReset}
               className="px-3 py-1 border rounded"
             >
               Re-record
@@ -121,7 +121,9 @@ export default function SentenceCard({
       {/* ✅ Completed */}
       {isRecorded && (
         <>
-          <p className="text-green-700 font-semibold">✓ Submitted</p>
+          <p className="text-green-700 font-semibold">
+            ✓ Submitted
+          </p>
           <span className="text-xs text-yellow-600 block">
             Saved offline • Will upload later
           </span>
