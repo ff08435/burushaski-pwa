@@ -2,6 +2,7 @@ import { useRecorder } from "../hooks/useRecorder";
 import { db } from "../db/indexdb";
 import { useUser } from "../context/UserContext";
 import { useEffect, useState } from "react";
+import { syncPendingRecordings } from "../utils/syncRecordings"; // ✅ FIX #1
 
 export default function SentenceCard({
   sentence,
@@ -21,27 +22,33 @@ export default function SentenceCard({
 
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
-  const [status, setStatus] = useState(null); // 👈 pending | synced
+  const [status, setStatus] = useState(null); // pending | synced
 
+  /**
+   * ✅ IMPORTANT:
+   * A sentence is considered "recorded" once it exists in IndexedDB,
+   * NOT only when it is synced.
+   */
   const isRecorded = isCompleted;
 
-  // 🔍 Load sync status from IndexedDB
+  // 🔁 FIX #3: Always re-read status from IndexedDB
   useEffect(() => {
-    if (!isRecorded) return;
+    const load = async () => {
+      const record = await db.recordings
+        .where({
+          participantId: user.participantId,
+          moduleId,
+          sentenceId: sentence.sentenceId,
+        })
+        .last();
 
-    db.recordings
-      .where({
-        participantId: user.participantId,
-        moduleId,
-        sentenceId: sentence.sentenceId,
-      })
-      .last()
-      .then((record) => {
-        if (record?.status) {
-          setStatus(record.status);
-        }
-      });
-  }, [isRecorded, moduleId, sentence.sentenceId, user.participantId]);
+      if (record?.status) {
+        setStatus(record.status);
+      }
+    };
+
+    load();
+  }, [moduleId, sentence.sentenceId, user.participantId]);
 
   const handleStart = async () => {
     await startRecording();
@@ -61,6 +68,7 @@ export default function SentenceCard({
     setAudioUrl(null);
   };
 
+  // ✅ FIX #1: Trigger sync after every submit
   const submit = async () => {
     if (!audioBlob || isRecorded) return;
 
@@ -70,12 +78,17 @@ export default function SentenceCard({
       moduleId,
       sentenceId: sentence.sentenceId,
       audioBlob,
-      status: "pending", // 🔑 queued
+      status: "pending",
       createdAt: new Date(),
     });
 
     setStatus("pending");
     onSubmitted(sentence.sentenceId);
+
+    // 🚀 FORCE SYNC IF ONLINE
+    if (navigator.onLine) {
+      syncPendingRecordings();
+    }
   };
 
   return (
