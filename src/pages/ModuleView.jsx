@@ -1,3 +1,4 @@
+//module view
 import { useParams, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSentences } from "../hooks/useSentences";
@@ -23,10 +24,7 @@ export default function ModuleView() {
     );
   }
 
-  // 🔐 Auth guard
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
+
 
   // 🚨 Route guard (THIS FIXES BLANK SCREEN)
   if (!moduleId) {
