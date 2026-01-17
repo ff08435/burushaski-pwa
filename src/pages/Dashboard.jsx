@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useSentences } from "../hooks/useSentences";
 import { db } from "../db/indexdb";
 import { useUser } from "../context/UserContext";
@@ -12,6 +12,11 @@ export default function Dashboard() {
   const data = useSentences();
   const { user } = useUser();
   const navigate = useNavigate();
+
+  // 🔐 AUTH GUARD — must be first
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   const [completedMap, setCompletedMap] = useState({});
   const [notificationSent, setNotificationSent] = useState(false);
@@ -38,7 +43,7 @@ export default function Dashboard() {
 
   if (!data) return <p className="p-4">Loading…</p>;
 
-  // 🔔 REMINDER LOGIC (MUST be before return)
+  // 🔔 REMINDER LOGIC
   let reminderMessage = null;
 
   const incompleteModules = data.modules.filter((module) => {
@@ -69,7 +74,9 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">Modules</h1>
+      <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+        Modules
+      </h1>
 
       {reminderMessage && (
         <ReminderBanner message={reminderMessage} />
@@ -102,11 +109,7 @@ export default function Dashboard() {
               )}
             </div>
 
-            <ProgressBar
-              completed={completed}
-              total={total}
-              small
-            />
+            <ProgressBar completed={completed} total={total} small />
           </div>
         );
       })}

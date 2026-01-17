@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useSentences } from "../hooks/useSentences";
 import SentenceCard from "../Components/SentenceCard";
@@ -10,6 +10,11 @@ export default function ModuleView() {
   const { moduleId } = useParams();
   const data = useSentences();
   const { user } = useUser();
+
+  // 🔐 AUTH GUARD
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
 
   const [completed, setCompleted] = useState([]);
 
@@ -40,7 +45,9 @@ export default function ModuleView() {
 
   return (
     <div className="p-6 space-y-4">
-      <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">{module.title}</h1>
+      <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+        {module.title}
+      </h1>
 
       <ProgressBar
         completed={completed.length}
