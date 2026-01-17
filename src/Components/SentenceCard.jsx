@@ -1,7 +1,7 @@
 import { useRecorder } from "../hooks/useRecorder";
 import { db } from "../db/indexdb";
 import { useUser } from "../context/UserContext";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function SentenceCard({
   sentence,
@@ -21,8 +21,27 @@ export default function SentenceCard({
 
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [status, setStatus] = useState(null); // 👈 pending | synced
 
   const isRecorded = isCompleted;
+
+  // 🔍 Load sync status from IndexedDB
+  useEffect(() => {
+    if (!isRecorded) return;
+
+    db.recordings
+      .where({
+        participantId: user.participantId,
+        moduleId,
+        sentenceId: sentence.sentenceId,
+      })
+      .last()
+      .then((record) => {
+        if (record?.status) {
+          setStatus(record.status);
+        }
+      });
+  }, [isRecorded, moduleId, sentence.sentenceId, user.participantId]);
 
   const handleStart = async () => {
     await startRecording();
@@ -51,10 +70,11 @@ export default function SentenceCard({
       moduleId,
       sentenceId: sentence.sentenceId,
       audioBlob,
-      status: "pending", // 🔑 offline queue
+      status: "pending", // 🔑 queued
       createdAt: new Date(),
     });
 
+    setStatus("pending");
     onSubmitted(sentence.sentenceId);
   };
 
@@ -118,15 +138,24 @@ export default function SentenceCard({
         </div>
       )}
 
-      {/* ✅ Completed */}
+      {/* ✅ Completed status */}
       {isRecorded && (
         <>
           <p className="text-green-700 font-semibold">
             ✓ Submitted
           </p>
-          <span className="text-xs text-yellow-600 block">
-            Saved offline • Will upload later
-          </span>
+
+          {status === "pending" && (
+            <span className="text-xs text-yellow-600 block">
+              Saved offline • Will upload later
+            </span>
+          )}
+
+          {status === "synced" && (
+            <span className="text-xs text-green-600 block">
+              Uploaded successfully
+            </span>
+          )}
         </>
       )}
     </div>
