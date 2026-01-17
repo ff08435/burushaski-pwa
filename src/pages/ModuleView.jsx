@@ -18,6 +18,7 @@ export default function ModuleView() {
 
   const [completed, setCompleted] = useState([]);
 
+  // 🔄 Load recorded sentences (online OR offline)
   useEffect(() => {
     if (!user?.participantId) return;
 
@@ -45,33 +46,50 @@ export default function ModuleView() {
 
   return (
     <div className="p-6 space-y-4">
+      {/* Module Title */}
       <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
         {module.title}
       </h1>
 
+      {/* Progress */}
       <ProgressBar
         completed={completed.length}
         total={module.sentences.length}
       />
 
       {allCompleted && (
-        <p className="text-green-700 font-semibold">
+        <p className="text-green-500 font-semibold">
           Module complete 🎉
         </p>
       )}
 
-      {module.sentences.map((sentence, index) => (
-        <SentenceCard
-          key={sentence.sentenceId}
-          sentence={sentence}
-          index={index}
-          moduleId={moduleId}
-          isCompleted={completed.includes(sentence.sentenceId)}
-          onSubmitted={(sid) =>
-            setCompleted((prev) => [...prev, sid])
-          }
-        />
-      ))}
+      {/* Sentences */}
+      <div className="space-y-3">
+        {module.sentences.map((sentence, index) => {
+          const isRecorded = completed.includes(sentence.sentenceId);
+
+          return (
+            <div key={sentence.sentenceId}>
+              <SentenceCard
+                sentence={sentence}
+                index={index}
+                moduleId={moduleId}
+                isCompleted={isRecorded}
+                onSubmitted={(sid) =>
+                  setCompleted((prev) => [...prev, sid])
+                }
+              />
+
+              {/* Offline queue indicator */}
+              {isRecorded && (
+                <p className="text-xs text-yellow-400 mt-1 ml-2">
+                  Saved offline • will upload when online
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

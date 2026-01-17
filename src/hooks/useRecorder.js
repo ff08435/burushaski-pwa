@@ -1,49 +1,57 @@
-import { useRef, useState } from "react";
+import { useState, useRef } from "react";
+import { db } from "../db/indexdb";
+import { useUser } from "../context/UserContext";
 
-export function useRecorder() {
+export function useRecorder({ moduleId, sentenceId }) {
+  const { user } = useUser();
+
+  const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
-
-  const [audioBlob, setAudioBlob] = useState(null);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
 
   const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    mediaRecorderRef.current = new MediaRecorder(stream);
+    const mediaRecorder = new MediaRecorder(stream);
+    mediaRecorderRef.current = mediaRecorder;
     chunksRef.current = [];
 
-    mediaRecorderRef.current.ondataavailable = (e) => {
-      chunksRef.current.push(e.data);
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
     };
 
-    mediaRecorderRef.current.onstop = () => {
-      const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-      setAudioBlob(blob);
-      setAudioUrl(URL.createObjectURL(blob));
-    };
-
-    mediaRecorderRef.current.start();
-    setIsRecording(true);
+    mediaRecorder.start();
+    setRecording(true);
   };
 
-  const stopRecording = () => {
-    mediaRecorderRef.current.stop();
-    setIsRecording(false);
-  };
+  const stopRecording = async () => {
+    return new Promise((resolve) => {
+      const mediaRecorder = mediaRecorderRef.current;
 
-  const resetRecording = () => {
-    setAudioBlob(null);
-    setAudioUrl(null);
+      mediaRecorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+
+        await db.recordings.add({
+          participantId: user.participantId,
+          dialect: user.dialect,
+          moduleId,
+          sentenceId,
+          audioBlob: blob,
+          status: "pending",
+          createdAt: new Date(),
+        });
+
+        setRecording(false);
+        resolve(blob);
+      };
+
+      mediaRecorder.stop();
+    });
   };
 
   return {
+    recording,
     startRecording,
     stopRecording,
-    resetRecording,
-    audioBlob,
-    audioUrl,
-    isRecording,
   };
 }
