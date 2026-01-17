@@ -20,8 +20,10 @@ export default function SentenceCard({
     isRecording,
   } = useRecorder();
 
+  const isRecorded = isCompleted; // ✅ single source of truth
+
   const submit = async () => {
-    if (!audioBlob || isCompleted) return;
+    if (!audioBlob || isRecorded) return;
 
     await db.recordings.add({
       participantId: user.participantId,
@@ -36,8 +38,8 @@ export default function SentenceCard({
 
   return (
     <div
-      className={`border p-4 rounded space-y-2 ${
-        isCompleted
+      className={`border p-4 rounded space-y-2 transition ${
+        isRecorded
           ? "bg-gray-100 opacity-60 pointer-events-none"
           : "bg-white"
       }`}
@@ -50,7 +52,8 @@ export default function SentenceCard({
         {sentence.transliteration}
       </p>
 
-      {!isCompleted && !audioUrl && (
+      {/* 🎙 Recording controls (only if NOT recorded yet) */}
+      {!isRecorded && !audioUrl && (
         <div className="space-x-2">
           {!isRecording ? (
             <button
@@ -70,7 +73,8 @@ export default function SentenceCard({
         </div>
       )}
 
-      {!isCompleted && audioUrl && (
+      {/* 🎧 Playback + submit (only if NOT recorded yet) */}
+      {!isRecorded && audioUrl && (
         <div className="space-y-2">
           <audio controls src={audioUrl} />
 
@@ -92,10 +96,17 @@ export default function SentenceCard({
         </div>
       )}
 
-      {isCompleted && (
-        <p className="text-green-700 font-semibold">
-          ✓ Submitted
-        </p>
+      {/* ✅ Recorded state */}
+      {isRecorded && (
+        <>
+          <p className="text-green-700 font-semibold">
+            ✓ Submitted
+          </p>
+
+          <span className="text-xs text-yellow-600 block">
+            Saved offline • Will upload later
+          </span>
+        </>
       )}
     </div>
   );
