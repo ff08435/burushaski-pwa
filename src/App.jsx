@@ -9,21 +9,26 @@ import { syncPendingRecordings } from "./utils/syncRecordings";
 export default function App() {
   const { loading } = useUser();
 
+const { user } = useUser();
+
 useEffect(() => {
   const handleOnline = () => {
     console.log("🌐 Back online");
-    syncPendingRecordings();
+    syncPendingRecordings(user);
   };
 
   window.addEventListener("online", handleOnline);
 
-  // Run once on app start too
-  syncPendingRecordings();
+  // Run once on app start
+  if (user) {
+    syncPendingRecordings(user);
+  }
 
   return () => {
     window.removeEventListener("online", handleOnline);
   };
-}, []);
+}, [user]);
+
 
 
   // Wait until user is loaded from localStorage

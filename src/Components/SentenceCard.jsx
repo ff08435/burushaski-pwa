@@ -87,7 +87,7 @@ export default function SentenceCard({
 
     // 🚀 FORCE SYNC IF ONLINE
     if (navigator.onLine) {
-      syncPendingRecordings();
+      syncPendingRecordings(user);
     }
   };
 

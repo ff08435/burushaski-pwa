@@ -1,10 +1,8 @@
 import { db } from "../db/indexdb";
+import { uploadRecording } from "./uploadRecording";
 
-/**
- * Upload all pending recordings when online
- */
-export async function syncPendingRecordings() {
-  if (!navigator.onLine) return;
+export async function syncPendingRecordings(user) {
+  if (!navigator.onLine || !user) return;
 
   const pending = await db.recordings
     .where("status")
@@ -13,31 +11,29 @@ export async function syncPendingRecordings() {
 
   if (pending.length === 0) return;
 
-  console.log("📡 Syncing", pending.length, "recordings...");
+  console.log("📡 Syncing", pending.length, "recordings to Supabase...");
 
-  for (const record of pending) {
+  for (const rec of pending) {
+    if (!rec.audioBlob) continue;
+
     try {
-      // ⚠️ TEMP: simulate upload (replace later with real API)
-      await fakeUpload(record);
+      await uploadRecording({
+        blob: rec.audioBlob,
+        participantId: rec.participantId,
+        dialect: rec.dialect,
+        gender: user.gender,
+        moduleId: rec.moduleId,
+        sentenceId: rec.sentenceId,
+      });
 
-      // ✅ Mark as synced
-      await db.recordings.update(record.id, {
+      await db.recordings.update(rec.id, {
         status: "synced",
         syncedAt: new Date(),
       });
 
-      console.log("✅ Uploaded:", record.sentenceId);
+      console.log("✅ Uploaded:", rec.sentenceId);
     } catch (err) {
-      console.error("❌ Upload failed:", record.id, err);
+      console.error("❌ Sync failed for:", rec.sentenceId, err);
     }
   }
-}
-
-/**
- * Fake upload for now (replace with real API later)
- */
-function fakeUpload(record) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, 800); // simulate network delay
-  });
 }
