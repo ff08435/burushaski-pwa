@@ -1,6 +1,7 @@
 import { useRecorder } from "../hooks/useRecorder";
 import { db } from "../db/indexdb";
 import { useUser } from "../context/UserContext";
+import { useState } from "react";
 
 export default function SentenceCard({
   sentence,
@@ -11,16 +12,33 @@ export default function SentenceCard({
 }) {
   const { user } = useUser();
 
-  const {
-    startRecording,
-    stopRecording,
-    resetRecording,
-    audioBlob,
-    audioUrl,
-    isRecording,
-  } = useRecorder();
+  const { recording, startRecording, stopRecording } = useRecorder();
 
-  const isRecorded = isCompleted; // ✅ single source of truth
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+
+  const isRecorded = isCompleted;
+
+  const handleStart = async () => {
+    setIsRecording(true);
+    await startRecording();
+  };
+
+  const handleStop = async () => {
+    const blob = await stopRecording();
+    setIsRecording(false);
+
+    if (blob) {
+      setAudioBlob(blob);
+      setAudioUrl(URL.createObjectURL(blob));
+    }
+  };
+
+  const resetRecording = () => {
+    setAudioBlob(null);
+    setAudioUrl(null);
+  };
 
   const submit = async () => {
     if (!audioBlob || isRecorded) return;
@@ -31,6 +49,7 @@ export default function SentenceCard({
       sentenceId: sentence.sentenceId,
       audio: audioBlob,
       createdAt: new Date(),
+      synced: false, // 🔑 queued for later upload
     });
 
     onSubmitted(sentence.sentenceId);
@@ -52,19 +71,19 @@ export default function SentenceCard({
         {sentence.transliteration}
       </p>
 
-      {/* 🎙 Recording controls (only if NOT recorded yet) */}
+      {/* 🎙 Recording */}
       {!isRecorded && !audioUrl && (
         <div className="space-x-2">
           {!isRecording ? (
             <button
-              onClick={startRecording}
+              onClick={handleStart}
               className="px-3 py-1 bg-black text-white rounded"
             >
               Record
             </button>
           ) : (
             <button
-              onClick={stopRecording}
+              onClick={handleStop}
               className="px-3 py-1 bg-red-600 text-white rounded"
             >
               Stop
@@ -73,7 +92,7 @@ export default function SentenceCard({
         </div>
       )}
 
-      {/* 🎧 Playback + submit (only if NOT recorded yet) */}
+      {/* 🎧 Playback */}
       {!isRecorded && audioUrl && (
         <div className="space-y-2">
           <audio controls src={audioUrl} />
@@ -96,13 +115,10 @@ export default function SentenceCard({
         </div>
       )}
 
-      {/* ✅ Recorded state */}
+      {/* ✅ Completed */}
       {isRecorded && (
         <>
-          <p className="text-green-700 font-semibold">
-            ✓ Submitted
-          </p>
-
+          <p className="text-green-700 font-semibold">✓ Submitted</p>
           <span className="text-xs text-yellow-600 block">
             Saved offline • Will upload later
           </span>
