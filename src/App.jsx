@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useUser } from "./context/UserContext";
+import { useState, useEffect } from "react";
 
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
