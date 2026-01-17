@@ -15,14 +15,6 @@ export default function ModuleView() {
   const { user, loading } = useUser();
   const [completed, setCompleted] = useState([]);
 
-  // ⏳ Wait for user hydration
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        Loading…
-      </div>
-    );
-  }
 
 
 

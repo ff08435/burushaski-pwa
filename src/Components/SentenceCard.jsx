@@ -12,7 +12,10 @@ export default function SentenceCard({
 }) {
   const { user } = useUser();
 
-  const { recording, startRecording, stopRecording } = useRecorder();
+ const { recording, startRecording, stopRecording } = useRecorder({ 
+  moduleId: moduleId, 
+  sentenceId: sentence.sentenceId 
+});
 
   const [audioBlob, setAudioBlob] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
