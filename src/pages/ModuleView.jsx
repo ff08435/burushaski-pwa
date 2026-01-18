@@ -6,7 +6,7 @@ import SentenceCard from "../Components/SentenceCard";
 import { db } from "../db/indexdb";
 import { useUser } from "../context/UserContext";
 import ProgressBar from "../Components/ProgressBar";
-import { useParams, Navigate, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 
 export default function ModuleView() {
