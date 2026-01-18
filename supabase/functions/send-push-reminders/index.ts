@@ -1,32 +1,28 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import webpush from "npm:web-push";
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+serve(async () => {
+  webpush.setVapidDetails(
+    "mailto:test@example.com",
+    Deno.env.get("VAPID_PUBLIC_KEY")!,
+    Deno.env.get("VAPID_PRIVATE_KEY")!
+  );
 
-console.log("Hello from Functions!")
+  const subscription = {
+    endpoint: "https://fcm.googleapis.com/fcm/send/dQR_R-ilpNU:APA91bH0I5KANt2eyUUlbAFW6HgMDkQaFj4l60GAfhkG4Je_yJdnw2-IU-48YaL5ahs2gtBDl7yDU1RsehX3BXOTC6XXayBqz7ibHWXTE3I1A_xX6-nY_pSGFJ_oCEH25wt3xhvO-0AD",
+    keys: {
+      p256dh: "BEPC0xm6P7YepoHWNzudccvd2cQMXUslVGB0WNdT08NTpkUNYA1PDEKUsL-gIAqyGdS10HfrtnQ5cEuZ-nEsGx8",
+      auth: "33qx8SoiXUxz88yV4EiYuw",
+    },
+  };
 
-Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name}!`,
-  }
+  await webpush.sendNotification(
+    subscription,
+    JSON.stringify({
+      title: "Burushaski Push Test",
+      body: "🎉 This arrived while the app was closed",
+    })
+  );
 
-  return new Response(
-    JSON.stringify(data),
-    { headers: { "Content-Type": "application/json" } },
-  )
-})
-
-/* To invoke locally:
-
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
-
-  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/send-push-reminders' \
-    --header 'Authorization: Bearer eyJhbGciOiJFUzI1NiIsImtpZCI6ImI4MTI2OWYxLTIxZDgtNGYyZS1iNzE5LWMyMjQwYTg0MGQ5MCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjIwODQxMDczMDl9.9miJOjQ0avloXpGUDOibW-2z6StmbEbX7qA_F6YeeTRROL_NFJTOSacHsqfzD6EWMUKCJUXgN--grOCoCddfzg' \
-    --header 'Content-Type: application/json' \
-    --data '{"name":"Functions"}'
-
-*/
+  return new Response("Push sent");
+});
