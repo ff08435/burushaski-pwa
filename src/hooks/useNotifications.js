@@ -17,3 +17,12 @@ export async function subscribeToPush() {
   console.log("Push subscription:", sub);
   return sub;
 }
+await fetch("/api/send-push", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    subscription, // the PushSubscription object
+    title: "Test Push",
+    body: "This works even when app is closed 🎉",
+  }),
+});

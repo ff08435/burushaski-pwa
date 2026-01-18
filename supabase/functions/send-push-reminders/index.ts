@@ -1,28 +1,28 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import webpush from "npm:web-push";
+export const config = { verify_jwt: false };
 
-serve(async () => {
-  webpush.setVapidDetails(
-    "mailto:test@example.com",
-    Deno.env.get("VAPID_PUBLIC_KEY")!,
-    Deno.env.get("VAPID_PRIVATE_KEY")!
-  );
+import { encodeBase64 } from "https://deno.land/std@0.224.0/encoding/base64.ts";
 
+Deno.serve(async () => {
+  const payload = JSON.stringify({
+    title: "Burushaski Push Test",
+    body: "📢 This arrived while the app was closed",
+  });
+
+  // This subscription should eventually come from DB
   const subscription = {
-    endpoint: "https://fcm.googleapis.com/fcm/send/dQR_R-ilpNU:APA91bH0I5KANt2eyUUlbAFW6HgMDkQaFj4l60GAfhkG4Je_yJdnw2-IU-48YaL5ahs2gtBDl7yDU1RsehX3BXOTC6XXayBqz7ibHWXTE3I1A_xX6-nY_pSGFJ_oCEH25wt3xhvO-0AD",
+    endpoint: "YOUR_ENDPOINT",
     keys: {
-      p256dh: "BEPC0xm6P7YepoHWNzudccvd2cQMXUslVGB0WNdT08NTpkUNYA1PDEKUsL-gIAqyGdS10HfrtnQ5cEuZ-nEsGx8",
-      auth: "33qx8SoiXUxz88yV4EiYuw",
+      p256dh: "YOUR_P256DH",
+      auth: "YOUR_AUTH",
     },
   };
 
-  await webpush.sendNotification(
-    subscription,
-    JSON.stringify({
-      title: "Burushaski Push Test",
-      body: "🎉 This arrived while the app was closed",
-    })
-  );
+  const vapidHeaders = {
+    "Content-Type": "application/json",
+  };
 
-  return new Response("Push sent");
+  return new Response(
+    JSON.stringify({ ok: true }),
+    { headers: vapidHeaders }
+  );
 });
