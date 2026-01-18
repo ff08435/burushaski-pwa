@@ -8,8 +8,6 @@ import ReminderBanner from "../Components/ReminderBanner";
 import { requestNotificationPermission } from "../hooks/useNotifications";
 import { sendReminderNotification } from "../utils/notify";
 
-
-
 export default function Dashboard() {
   const data = useSentences();
   const { user } = useUser();
@@ -21,7 +19,6 @@ export default function Dashboard() {
   }
 
   const [completedMap, setCompletedMap] = useState({});
-  const [notificationSent, setNotificationSent] = useState(false);
 
   // 🔄 Load progress from IndexedDB
   useEffect(() => {
@@ -61,31 +58,36 @@ export default function Dashboard() {
     reminderMessage = `You have ${remaining} sentences left in "${mod.title}".`;
   }
 
-  // 🔔 Browser notification (fire once) //CHANGED THIS AS WELL
-useEffect(() => {
-  if (!reminderMessage) return;
+  // 🔔 Browser notification (fire once every 6 hours)
+  useEffect(() => {
+    if (!reminderMessage) return;
 
-  const LAST_KEY = "last_reminder_sent";
-  const now = Date.now();
-  const lastSent = localStorage.getItem(LAST_KEY);
+    const LAST_KEY = "last_reminder_sent";
+    const now = Date.now();
+    const lastSent = localStorage.getItem(LAST_KEY);
 
-  // Fire at most once every 6 hours
-  const SIX_HOURS = 6 * 60 * 60 * 1000;
+    const SIX_HOURS = 6 * 60 * 60 * 1000;
 
-  if (!lastSent || now - Number(lastSent) > SIX_HOURS) {
-    requestNotificationPermission().then((granted) => {
-      if (!granted) return;
+    if (!lastSent || now - Number(lastSent) > SIX_HOURS) {
+      requestNotificationPermission().then((granted) => {
+        if (!granted) return;
 
-      sendReminderNotification(
-        "Burushaski Recording Reminder",
-        reminderMessage
-      );
+        sendReminderNotification(
+          "Burushaski Recording Reminder",
+          reminderMessage
+        );
 
-      localStorage.setItem(LAST_KEY, now.toString());
-    });
-  }
-}, [reminderMessage]);
+        localStorage.setItem(LAST_KEY, now.toString());
+      });
+    }
+  }, [reminderMessage]);
 
+  // ✅ JSX MUST BE RETURNED
+  return (
+    <div className="p-4 space-y-4">
+      {reminderMessage && (
+        <ReminderBanner message={reminderMessage} />
+      )}
 
       {data.modules.map((module) => {
         const completed = completedMap[module.moduleId] || 0;
