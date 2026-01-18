@@ -10,13 +10,13 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY!
 );
 
-export default async function handler(req: Request) {
+export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
+    return res.status(405).send("Method Not Allowed");
   }
 
   try {
-    const subscription = await req.json();
+    const subscription = req.body; // ✅ Node-style body
 
     await webpush.sendNotification(
       subscription,
@@ -26,15 +26,9 @@ export default async function handler(req: Request) {
       })
     );
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return res.status(200).json({ success: true });
   } catch (err: any) {
     console.error("Push error:", err);
-    return new Response(
-      JSON.stringify({ error: err.message }),
-      { status: 500 }
-    );
+    return res.status(500).json({ error: err.message });
   }
 }
