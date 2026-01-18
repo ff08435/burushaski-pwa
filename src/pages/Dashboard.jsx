@@ -7,11 +7,7 @@ import ProgressBar from "../Components/ProgressBar";
 import ReminderBanner from "../Components/ReminderBanner";
 import { requestNotificationPermission } from "../hooks/useNotifications";
 import { sendReminderNotification } from "../utils/notify";
-import { subscribeToPush } from "../hooks/useNotifications"; ///ADDED THIS
 
-useEffect(() => {
-  subscribeToPush();
-}, []);
 
 
 export default function Dashboard() {
