@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
 import { requestNotificationPermission } from "../hooks/useNotifications";
+import { subscribeToPush } from "../utils/pushSubscribe";
+import { supabase } from "../utils/supabase";
+
 
 export default function Onboarding() {
   const [participantId, setParticipantId] = useState("");
@@ -99,4 +102,14 @@ export default function Onboarding() {
       </div>
     </div>
   );
+}
+const sub = await subscribeToPush();
+
+if (sub) {
+  await supabase.from("push_subscriptions").insert({
+    participant_id,
+    endpoint: sub.endpoint,
+    p256dh: sub.keys.p256dh,
+    auth: sub.keys.auth,
+  });
 }
