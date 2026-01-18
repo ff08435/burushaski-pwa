@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { requestNotificationPermission } from "../hooks/useNotifications";
 
 export default function Onboarding() {
   const [participantId, setParticipantId] = useState("");
@@ -10,9 +11,10 @@ export default function Onboarding() {
   const { setUser } = useUser();
   const navigate = useNavigate();
 
-  const submit = () => {
+  const submit = async () => { //CHANGED THIS TO ASYNC
     if (!participantId || !dialect || !gender) return;
-
+    
+    await requestNotificationPermission();
     setUser({ participantId, dialect, gender });
     navigate("/dashboard");
   };

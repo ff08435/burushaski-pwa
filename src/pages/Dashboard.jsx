@@ -61,28 +61,31 @@ export default function Dashboard() {
     reminderMessage = `You have ${remaining} sentences left in "${mod.title}".`;
   }
 
-  // 🔔 Browser notification (fire once)
-  useEffect(() => {
-    if (!reminderMessage || notificationSent) return;
+  // 🔔 Browser notification (fire once) //CHANGED THIS AS WELL
+useEffect(() => {
+  if (!reminderMessage) return;
 
-    requestNotificationPermission().then(() => {
+  const LAST_KEY = "last_reminder_sent";
+  const now = Date.now();
+  const lastSent = localStorage.getItem(LAST_KEY);
+
+  // Fire at most once every 6 hours
+  const SIX_HOURS = 6 * 60 * 60 * 1000;
+
+  if (!lastSent || now - Number(lastSent) > SIX_HOURS) {
+    requestNotificationPermission().then((granted) => {
+      if (!granted) return;
+
       sendReminderNotification(
         "Burushaski Recording Reminder",
         reminderMessage
       );
-      setNotificationSent(true);
+
+      localStorage.setItem(LAST_KEY, now.toString());
     });
-  }, [reminderMessage, notificationSent]);
+  }
+}, [reminderMessage]);
 
-  return (
-    <div className="p-6 space-y-4">
-      <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-        Modules
-      </h1>
-
-      {reminderMessage && (
-        <ReminderBanner message={reminderMessage} />
-      )}
 
       {data.modules.map((module) => {
         const completed = completedMap[module.moduleId] || 0;
