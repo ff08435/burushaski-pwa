@@ -6,10 +6,13 @@ import SentenceCard from "../Components/SentenceCard";
 import { db } from "../db/indexdb";
 import { useUser } from "../context/UserContext";
 import ProgressBar from "../Components/ProgressBar";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
+
 
 export default function ModuleView() {
   const params = useParams();
   const moduleId = params?.moduleId; // ✅ SAFE ACCESS
+  const navigate = useNavigate();
 
   const data = useSentences();
   const { user, loading } = useUser();
@@ -53,6 +56,12 @@ export default function ModuleView() {
   return (
     <div className="p-6 space-y-4">
       <h1 className="text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+      <button
+      onClick={() => navigate("/dashboard")}
+      className="flex items-center gap-2 text-sm text-yellow-400 hover:text-yellow-300 mb-2"
+    >
+      ← Back to Dashboard
+    </button>
         {module.title}
       </h1>
 
