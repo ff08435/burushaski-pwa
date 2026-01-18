@@ -1,3 +1,7 @@
+export const config = {
+  runtime: "nodejs",
+};
+
 import webpush from "web-push";
 
 webpush.setVapidDetails(
