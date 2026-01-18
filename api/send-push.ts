@@ -1,4 +1,3 @@
-import type { NextApiRequest, NextApiResponse } from "next";
 import webpush from "web-push";
 
 webpush.setVapidDetails(
@@ -7,32 +6,31 @@ webpush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY!
 );
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: Request) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const { subscription, title, body } = req.body;
-
-  if (!subscription) {
-    return res.status(400).json({ error: "Missing subscription" });
+    return new Response("Method Not Allowed", { status: 405 });
   }
 
   try {
+    const subscription = await req.json();
+
     await webpush.sendNotification(
       subscription,
       JSON.stringify({
-        title: title || "Burushaski Reminder",
-        body: body || "Please record your pending sentences",
+        title: "Burushaski Push Test",
+        body: "🎉 This arrived while the app was closed",
       })
     );
 
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Push failed" });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err: any) {
+    console.error("Push error:", err);
+    return new Response(
+      JSON.stringify({ error: err.message }),
+      { status: 500 }
+    );
   }
 }
